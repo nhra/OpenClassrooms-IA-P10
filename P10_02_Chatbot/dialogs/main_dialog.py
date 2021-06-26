@@ -19,8 +19,11 @@ from .booking_dialog import BookingDialog
 
 class MainDialog(ComponentDialog):
     def __init__(
-        self, luis_recognizer: FlightBookingRecognizer, booking_dialog: BookingDialog
-    ):
+        self, 
+        luis_recognizer: FlightBookingRecognizer, 
+        booking_dialog: BookingDialog
+        ):
+        
         super(MainDialog, self).__init__(MainDialog.__name__)
 
         self._luis_recognizer = luis_recognizer
@@ -30,7 +33,8 @@ class MainDialog(ComponentDialog):
         self.add_dialog(booking_dialog)
         self.add_dialog(
             WaterfallDialog(
-                "WFDialog", [self.intro_step, self.act_step, self.final_step]
+                "WFDialog", 
+                [self.intro_step, self.act_step, self.final_step]
             )
         )
 
@@ -50,7 +54,7 @@ class MainDialog(ComponentDialog):
         message_text = (
             str(step_context.options)
             if step_context.options
-            else "What can I help you with today?"
+            else f"Hello and Welcome. Let me know your travel wishes: origin, destination, dates and budget"
         )
         prompt_message = MessageFactory.text(
             message_text, message_text, InputHints.expecting_input
@@ -74,15 +78,26 @@ class MainDialog(ComponentDialog):
 
         if intent == Intent.BOOK_FLIGHT.value and luis_result:
             # Show a warning for Origin and Destination if we can't resolve them.
-            await MainDialog._show_warning_for_unsupported_cities(
-                step_context.context, luis_result
-            )
+            #await MainDialog._show_warning_for_unsupported_cities(
+            #    step_context.context, luis_result
+            #)
 
             # Run the BookingDialog giving it whatever details we have from the LUIS call.
             return await step_context.begin_dialog(self._booking_dialog_id, luis_result)
 
+        if intent == Intent.GREETINGS.value:
+            greetings_text = (
+                "Hello. I will be pleased to help you book your flight. Just let me know your wishes"
+            )
+            greetings_message = MessageFactory.text(
+                greetings_text, greetings_text, InputHints.ignoring_input
+            )
+            await step_context.context.send_activity(greetings_message)
+
         if intent == Intent.GET_WEATHER.value:
-            get_weather_text = "TODO: get weather flow here"
+            get_weather_text = (
+                "I can't give you the weather forecast but can help you book your flight"
+            )
             get_weather_message = MessageFactory.text(
                 get_weather_text, get_weather_text, InputHints.ignoring_input
             )
@@ -110,23 +125,27 @@ class MainDialog(ComponentDialog):
             # If the call to the booking service was successful tell the user.
             # time_property = Timex(result.travel_date)
             # travel_date_msg = time_property.to_natural_language(datetime.now())
-            msg_txt = f"I have you booked to {result.destination} from {result.origin} on {result.travel_date}"
+            msg_txt = (
+                f"I have you booked to {result.destination} from {result.origin} departing on" 
+                f"{result.travel_departure_date} returning on {result.travel_return_date}"
+                f"with a budget of {result.budget}"
+            )
             message = MessageFactory.text(msg_txt, msg_txt, InputHints.ignoring_input)
             await step_context.context.send_activity(message)
 
         prompt_message = "What else can I do for you?"
         return await step_context.replace_dialog(self.id, prompt_message)
 
-    @staticmethod
-    async def _show_warning_for_unsupported_cities(
-        context: TurnContext, luis_result: BookingDetails
-    ) -> None:
-        if luis_result.unsupported_airports:
-            message_text = (
-                f"Sorry but the following airports are not supported:"
-                f" {', '.join(luis_result.unsupported_airports)}"
-            )
-            message = MessageFactory.text(
-                message_text, message_text, InputHints.ignoring_input
-            )
-            await context.send_activity(message)
+    #@staticmethod
+    #async def _show_warning_for_unsupported_cities(
+    #    context: TurnContext, luis_result: BookingDetails
+    #) -> None:
+    #    if luis_result.unsupported_airports:
+    #        message_text = (
+    #            f"Sorry but the following airports are not supported:"
+    #            f" {', '.join(luis_result.unsupported_airports)}"
+    #        )
+    #        message = MessageFactory.text(
+    #            message_text, message_text, InputHints.ignoring_input
+    #        )
+    #        await context.send_activity(message)

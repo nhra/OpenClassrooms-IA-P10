@@ -22,6 +22,7 @@ class FlightBookingRecognizer(Recognizer):
             luis_application = LuisApplication(
                 configuration.LUIS_APP_ID,
                 configuration.LUIS_API_KEY,
+                #configuration.LUIS_API_HOST_NAME,
                 "https://" + configuration.LUIS_API_HOST_NAME,
             )
 
