@@ -1,0 +1,53 @@
+{"BookFlightUtterances": [
+	{"text": "I'd like to book a trip to Atlantis from Caprica on Saturday, August 13, 2016 for 8 adults. I have a tight budget of 1700.", 
+	"intentName": "BookFlight", 
+	"entityLabels": [
+		{"startCharIndex": 41, "endCharIndex": 47, "entityName": "From"}, 
+		{"startCharIndex": 27, "endCharIndex": 34, "entityName": "To"}, 
+		{"startCharIndex": 52, "endCharIndex": 76, "entityName": "Departure"}, 
+		{"startCharIndex": 117, "endCharIndex": 120, "entityName": "Budget"}
+		]
+	}, 
+	{"text": "Hello, I am looking to book a vacation from Gotham City to Mos Eisley for $2100.", 
+	"intentName": "BookFlight", 
+	"entityLabels": [
+		{"startCharIndex": 44, "endCharIndex": 54, "entityName": "From"}, 
+		{"startCharIndex": 59, "endCharIndex": 68, "entityName": "To"}, 
+		{"startCharIndex": 75, "endCharIndex": 78, "entityName": "Budget"}
+		]
+	}, 
+	{"text": "Hello there i am looking to go on a vacation with my family to Gotham City, can you help me?", 
+	"intentName": "BookFlight", 
+	"entityLabels": [
+		{"startCharIndex": 63, "endCharIndex": 73, "entityName": "To"}
+		]
+	}, 
+	{"text": "Hi I'd like to go to Caprica from Busan, between Sunday August 21, 2016 and Wednesday August 31, 2016", 
+	"intentName": "BookFlight", 
+	"entityLabels": [
+		{"startCharIndex": 34, "endCharIndex": 38, "entityName": "From"}, 
+		{"startCharIndex": 21, "endCharIndex": 27, "entityName": "To"}, 
+		{"startCharIndex": 49, "endCharIndex": 70, "entityName": "Departure"}, 
+		{"startCharIndex": 76, "endCharIndex": 100, "entityName": "Return"}
+		]
+	}, 
+	{"text": "Hello, I am looking to book a trip for 2 adults and 6 children for $21,300 or less. We are departing from Kochi for Denver.", 
+	"intentName": "BookFlight", 
+	"entityLabels": [
+		{"startCharIndex": 106, "endCharIndex": 110, "entityName": "From"}, 
+		{"startCharIndex": 116, "endCharIndex": 121, "entityName": "To"}, 
+		{"startCharIndex": 67, "endCharIndex": 73, "entityName": "Budget"}
+		]
+	}
+], 
+"OtherUtterances": [
+	{"text": "Hello", 
+	"intentName": "Greetings"}, 
+	{"text": "Good morning", 
+	"intentName": "Greetings"}, 
+	{"text": "what's the forecast for this friday?", 
+	"intentName": "GetWeather"}, 
+	{"text": "winter is coming", 
+	"intentName": "None"}
+	]
+}
