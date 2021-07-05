@@ -5,7 +5,7 @@ from datatypes_date_time.timex import Timex
 
 from botbuilder.dialogs import WaterfallDialog, WaterfallStepContext, DialogTurnResult
 from botbuilder.dialogs.prompts import ConfirmPrompt, TextPrompt, PromptOptions
-from botbuilder.core import MessageFactory
+from botbuilder.core import MessageFactory, BotTelemetryClient, NullTelemetryClient
 from botbuilder.schema import InputHints
 from .cancel_and_help_dialog import CancelAndHelpDialog
 from .departure_date_resolver_dialog import DepartureDateResolverDialog
@@ -13,27 +13,40 @@ from .return_date_resolver_dialog import ReturnDateResolverDialog
 
 
 class BookingDialog(CancelAndHelpDialog):
-    def __init__(self, dialog_id: str = None):
-        super(BookingDialog, self).__init__(dialog_id or BookingDialog.__name__)
+    def __init__(self, 
+            dialog_id: str = None, 
+            telemetry_client: BotTelemetryClient = None):
+        
+        super(BookingDialog, self).__init__(
+                dialog_id or BookingDialog.__name__, 
+                telemetry_client)
 
-        self.add_dialog(TextPrompt(TextPrompt.__name__))
+        self.telemetry_client = telemetry_client
+        
+        text_prompt = TextPrompt(TextPrompt.__name__)
+        text_prompt.telemetry_client = telemetry_client
+        self.add_dialog(text_prompt)
+
         self.add_dialog(ConfirmPrompt(ConfirmPrompt.__name__))
-        self.add_dialog(DepartureDateResolverDialog(DepartureDateResolverDialog.__name__))
-        self.add_dialog(ReturnDateResolverDialog(ReturnDateResolverDialog.__name__))
-        self.add_dialog(
-            WaterfallDialog(
-                WaterfallDialog.__name__,
-                [
-                    self.destination_step,
-                    self.origin_step,
-                    self.travel_departure_date_step,
-                    self.travel_return_date_step,
-                    self.budget_step,
-                    self.confirm_step,
-                    self.final_step,
-                ],
-            )
-        )
+        self.add_dialog(DepartureDateResolverDialog(DepartureDateResolverDialog.__name__, 
+            self.telemetry_client))
+        self.add_dialog(ReturnDateResolverDialog(ReturnDateResolverDialog.__name__, 
+            self.telemetry_client))
+        
+        waterfall_dialog = WaterfallDialog(
+            WaterfallDialog.__name__,
+            [
+                self.destination_step,
+                self.origin_step,
+                self.travel_departure_date_step,
+                self.travel_return_date_step,
+                self.budget_step,
+                self.confirm_step,
+                self.final_step,
+            ],
+        ) 
+        waterfall_dialog.telemetry_client = telemetry_client
+        self.add_dialog(waterfall_dialog)
 
         self.initial_dialog_id = WaterfallDialog.__name__
 
@@ -181,10 +194,29 @@ class BookingDialog(CancelAndHelpDialog):
         :param step_context:
         :return DialogTurnResult:
         """
-        if step_context.result:
-            booking_details = step_context.options
+        booking_details = step_context.options
+        booking_properties = {}
+        booking_properties["Destination"] = booking_details.destination
+        booking_properties["Origin"] = booking_details.origin
+        booking_properties["Departure"] = booking_details.travel_departure_date
+        booking_properties["Return"] = booking_details.travel_return_date
+        booking_properties["Budget"] = booking_details.budget
 
+        if step_context.result:
+            self.telemetry_client.track_trace(
+                    name="CONFIRMED",
+                    properties=booking_properties,
+                    severity="INFO")            
+            #self.telemetry_client.flush()
+            #booking_details = step_context.options
             return await step_context.end_dialog(booking_details)
+        
+        self.telemetry_client.track_trace(
+                    name="NOT CONFIRMED",
+                    properties=booking_properties,
+                    severity="WARNING")
+        #self.telemetry_client.flush()
+        
         return await step_context.end_dialog()
 
     def is_ambiguous(self, timex: str) -> bool:

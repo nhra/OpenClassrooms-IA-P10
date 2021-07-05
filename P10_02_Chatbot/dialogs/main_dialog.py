@@ -8,7 +8,13 @@ from botbuilder.dialogs import (
     DialogTurnResult,
 )
 from botbuilder.dialogs.prompts import TextPrompt, PromptOptions
-from botbuilder.core import MessageFactory, TurnContext
+from botbuilder.core import (
+    MessageFactory,
+    TurnContext,
+    BotTelemetryClient,
+    NullTelemetryClient,
+)
+
 from botbuilder.schema import InputHints
 
 from booking_details import BookingDetails
@@ -21,22 +27,30 @@ class MainDialog(ComponentDialog):
     def __init__(
         self, 
         luis_recognizer: FlightBookingRecognizer, 
-        booking_dialog: BookingDialog
-        ):
-        
+        booking_dialog: BookingDialog, 
+        telemetry_client: BotTelemetryClient = None,
+    ):
+
         super(MainDialog, self).__init__(MainDialog.__name__)
+        self.telemetry_client = telemetry_client
+
+        text_prompt = TextPrompt(TextPrompt.__name__)
+        text_prompt.telemetry_client = self.telemetry_client
+        self.add_dialog(text_prompt)
+
+        booking_dialog.telemetry_client = self.telemetry_client
+        self.add_dialog(booking_dialog)
+
+        wf_dialog = WaterfallDialog(
+            "WFDialog", [self.intro_step, self.act_step, self.final_step]
+        )
+        wf_dialog.telemetry_client = self.telemetry_client
+        self.add_dialog(wf_dialog)
+
 
         self._luis_recognizer = luis_recognizer
         self._booking_dialog_id = booking_dialog.id
 
-        self.add_dialog(TextPrompt(TextPrompt.__name__))
-        self.add_dialog(booking_dialog)
-        self.add_dialog(
-            WaterfallDialog(
-                "WFDialog", 
-                [self.intro_step, self.act_step, self.final_step]
-            )
-        )
 
         self.initial_dialog_id = "WFDialog"
 
@@ -81,6 +95,19 @@ class MainDialog(ComponentDialog):
             #await MainDialog._show_warning_for_unsupported_cities(
             #    step_context.context, luis_result
             #)
+            
+            #luis_understanding = {}
+            #luis_understanding["Text"] = step_context.context.activity.text
+            #luis_understanding["Destination"] = luis_result.destination
+            #luis_understanding["Origin"] = luis_result.origin
+            #luis_understanding["Departure"] = luis_result.travel_departure_date
+            #luis_understanding["Return"] = luis_result.travel_return_date
+            #luis_understanding["Budget"] = luis_result.budget
+            #self.telemetry_client.track_trace(
+            #        name="Luis understanding", 
+            #        properties=luis_understanding, 
+            #        severity="INFO")
+            #self.telemetry_client.flush()
 
             # Run the BookingDialog giving it whatever details we have from the LUIS call.
             return await step_context.begin_dialog(self._booking_dialog_id, luis_result)
